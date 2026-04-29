@@ -10,6 +10,7 @@ export const metadata: Metadata = {
   description: "Academic Ledger — Structural Assignment Management",
 };
 
+
 export default function RootLayout({
   children,
 }: Readonly<{

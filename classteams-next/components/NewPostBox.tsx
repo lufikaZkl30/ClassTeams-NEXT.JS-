@@ -1,5 +1,5 @@
 "use client";
-
+// This component is used in the main dashboard page to create new tasks (assignments).
 import { useState } from "react";
 import { Task, TaskStatus, TaskPriority } from "@/lib/types";
 

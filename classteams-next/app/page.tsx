@@ -78,7 +78,7 @@ export default function DashboardPage() {
               Academic Ledger
             </h2>
             <p className="text-sm font-mono text-primary tracking-widest uppercase">
-              Structural Assignment Management // Fall 2024
+              Structural Assignment Management // Fall 2026
             </p>
           </header>
 
