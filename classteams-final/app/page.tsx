@@ -6,6 +6,7 @@ import Sidebar from './components/Sidebar';
 import TopBar from './components/TopBar';
 import Footer from './components/Footer';
 import "./globals.css";
+import "@/public/navbar.css";
 import {
   getTasks,
   initializeTasks,
@@ -34,6 +35,7 @@ export default function Dashboard() {
     setTasks(getTasks());
   }
 
+  // Initialize tasks on component mount
   useEffect(() => {
     initializeTasks();
     reload();
