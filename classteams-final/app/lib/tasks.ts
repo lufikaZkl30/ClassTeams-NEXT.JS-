@@ -99,8 +99,11 @@ export function saveTasks(tasks: Task[]): void {
 
 export function createTask(task: Omit<Task, 'id'>): void {
   const tasks = getTasks();
-  const newTask = { ...task, id: Date.now() } as Task;
-  tasks.push(newTask);
+  const newTask: Task = {
+  id: Date.now(),
+  attachments: [],
+  ...task,
+};  tasks.push(newTask);
   saveTasks(tasks);
 }
 
@@ -124,13 +127,13 @@ export function getStatusColor(status: string): string {
   return colors[status] || 'text-slate-400 border-outline';
 }
 
-export function getPriorityColor(priority: string): string {
+export function getPriorityColor(priority?: string): string {
   const colors: Record<string, string> = {
     CRITICAL: 'text-error',
     HIGH: 'text-yellow-600',
     NORMAL: 'text-slate-600',
   };
-  return colors[priority] || 'text-slate-600';
+  return colors[priority || 'NORMAL'] || 'text-slate-600';
 }
 
 export function getFileIcon(fileName: string): string {

@@ -38,12 +38,15 @@ export default function Dashboard() {
   // Initialize tasks on component mount
   useEffect(() => {
     initializeTasks();
-    reload();
+    setTasks(getTasks());
   }, []);
 
   function handleCreate(e: React.FormEvent) {
     e.preventDefault();
-    createTask({ ...form, attachments: [] });
+    createTask({
+      ...form,
+      attachments: [],
+    });    
     reload();
     setShowModal(false);
     setForm({ code: '', title: '', deadline: '', instructor: '', status: 'PENDING', priority: 'NORMAL', course: '', description: '' });
