@@ -70,12 +70,21 @@ export default function Dashboard() {
 
             {/* Breadcrumb */}
             <nav aria-label="Breadcrumb" className="mb-8">
-              <ol className="flex items-center gap-2 text-sm">
-                <li><a href="/" className="text-primary hover:text-blue-700 font-semibold transition-colors">Dashboard</a></li>
-                <li className="text-on-surface-variant">/</li>
-                <li className="text-on-surface-variant font-semibold">Academic Ledger</li>
-              </ol>
-            </nav>
+            <ol className="flex items-center gap-2 text-sm">
+              <li>
+                <Link
+                  href="/"
+                  className="text-primary hover:text-blue-700 font-semibold transition-colors"
+                >
+                  Dashboard
+                </Link>
+              </li>
+              <li className="text-on-surface-variant">/</li>
+              <li className="text-on-surface-variant font-semibold">
+                Academic Ledger
+              </li>
+            </ol>
+          </nav>
 
             {/* Page Header */}
             <header className="mb-16 flex items-end justify-between">
