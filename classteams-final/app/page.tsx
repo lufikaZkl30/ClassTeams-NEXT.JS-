@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Sidebar from './components/Sidebar';
 import TopBar from './components/TopBar';
 import Footer from './components/Footer';
+import "./globals.css";
 import {
   getTasks,
   initializeTasks,
