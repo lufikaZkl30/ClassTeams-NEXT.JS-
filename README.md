@@ -124,7 +124,8 @@ This project was built to:
 
 ## 📸 Preview
 
-(Add your screenshot )
+<img width="1897" height="950" alt="image" src="https://github.com/user-attachments/assets/41922bee-393a-48fe-94cd-b65833bedb7c" />
+
 
 ---
 
