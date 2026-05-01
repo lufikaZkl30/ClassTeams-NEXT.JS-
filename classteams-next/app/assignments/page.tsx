@@ -358,7 +358,6 @@ export default function AssignmentsPage() {
           </div>
         </div>
       </main>
-
       <Footer />
     </>
   );
