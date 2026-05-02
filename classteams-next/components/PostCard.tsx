@@ -76,7 +76,7 @@ export default function PostCard({ task, onDelete }: PostCardProps) {
             </button>
           )}
           <Link
-            href={`/assignments?id=${task.id}`}
+            href={`/detail-teams?id=${task.id}`}
             className="bg-primary text-on-primary px-6 py-2 text-[10px] font-bold uppercase tracking-widest hover:bg-blue-700 transition-colors"
           >
             Open Case

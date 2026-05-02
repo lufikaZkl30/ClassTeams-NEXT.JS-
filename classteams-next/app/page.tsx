@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Breadcrumb from "@/components/Breadcrumb";
@@ -13,9 +14,14 @@ const STORAGE_KEY = "classteams_tasks";
 
 function loadTasks(): Task[] {
   if (typeof window === "undefined") return DEFAULT_TASKS;
+
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) return JSON.parse(stored) as Task[];
+
+    if (stored) {
+      return JSON.parse(stored) as Task[];
+    }
+
     localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_TASKS));
     return DEFAULT_TASKS;
   } catch {
@@ -32,21 +38,39 @@ export default function DashboardPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [mounted, setMounted] = useState(false);
 
+  const router = useRouter();
+
+  // ✅ LOGIN PROTECTION + LOAD DATA
   useEffect(() => {
-    setTasks(loadTasks());
+    const isLogin = localStorage.getItem("isLogin");
+
+    if (!isLogin) {
+      router.replace("/login"); // ⛔ kalau belum login
+      return;
+    }
+
+    const data = loadTasks();
+    setTasks(data);
     setMounted(true);
-  }, []);
+  }, [router]);
 
   function handleCreate(taskData: Omit<Task, "id">) {
-    const newTask: Task = { ...taskData, id: Date.now() };
+    const newTask: Task = {
+      ...taskData,
+      id: Date.now(),
+    };
+
     const updated = [newTask, ...tasks];
+
     setTasks(updated);
     saveTasks(updated);
   }
 
   function handleDelete(id: number) {
     if (!confirm("Are you sure you want to delete this task?")) return;
+
     const updated = tasks.filter((t) => t.id !== id);
+
     setTasks(updated);
     saveTasks(updated);
   }
@@ -54,9 +78,15 @@ export default function DashboardPage() {
   const openTasks = tasks.filter(
     (t) => t.status === "PENDING" || t.status === "REVISED"
   ).length;
+
   const completedTasks = tasks.filter(
     (t) => t.status === "COMPLETED" || t.status === "SUBMITTED"
   ).length;
+
+  const complianceRate =
+    tasks.length > 0
+      ? Math.round((completedTasks / tasks.length) * 100)
+      : 0;
 
   return (
     <>
@@ -71,7 +101,7 @@ export default function DashboardPage() {
             ]}
           />
 
-          {/* Page Header */}
+          {/* HEADER */}
           <header className="mb-16">
             <h2 className="text-6xl font-extrabold tracking-tighter uppercase mb-2 text-on-background">
               Academic Ledger
@@ -81,13 +111,11 @@ export default function DashboardPage() {
             </p>
           </header>
 
-          {/* Content Grid */}
+          {/* GRID */}
           <div className="grid grid-cols-12 gap-8">
-            {/* Tasks Column */}
-            <section
-              className="col-span-8 flex flex-col gap-6"
-              aria-label="Tasks list"
-            >
+
+            {/* TASK LIST */}
+            <section className="col-span-8 flex flex-col gap-6">
               <NewPostBox onCreateTask={handleCreate} />
 
               {!mounted ? (
@@ -96,7 +124,7 @@ export default function DashboardPage() {
                 </div>
               ) : tasks.length === 0 ? (
                 <div className="bg-white border border-dashed border-outline/40 p-12 text-center">
-                  <span className="material-symbols-outlined text-4xl text-slate-300 mb-4 block" aria-hidden="true">
+                  <span className="material-symbols-outlined text-4xl text-slate-300 mb-4 block">
                     inbox
                   </span>
                   <p className="text-slate-500 text-[10px] font-mono uppercase tracking-widest">
@@ -114,11 +142,11 @@ export default function DashboardPage() {
               )}
             </section>
 
-            {/* Right Sidebar Stats */}
+            {/* SIDEBAR */}
             <RightSidebar
               openTasks={openTasks}
               completedTasks={completedTasks}
-              complianceRate={92}
+              complianceRate={complianceRate}
             />
           </div>
         </div>

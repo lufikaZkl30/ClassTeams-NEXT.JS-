@@ -1,9 +1,13 @@
 "use client";
 
+import { useSearchParams } from "next/dist/client/components/navigation";
 import Image from "next/image";
 import Link from "next/link";
 
 export default function DetailTeams() {
+  const searchParams = useSearchParams();
+  const id = searchParams.get("id");
+  
   return (
     <div className="bg-surface text-on-surface min-h-screen flex">
 
