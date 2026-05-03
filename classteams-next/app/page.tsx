@@ -12,6 +12,13 @@ import { Task, DEFAULT_TASKS } from "@/lib/types";
 
 const STORAGE_KEY = "classteams_tasks";
 
+const [hasTeam, setHasTeam] = useState(false);
+
+useEffect(() => {
+  const team = localStorage.getItem("team");
+  if (team) setHasTeam(true);
+}, []);
+
 function loadTasks(): Task[] {
   if (typeof window === "undefined") return DEFAULT_TASKS;
 
