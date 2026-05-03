@@ -2,6 +2,7 @@
 
 import { useState, useEffect, FormEvent } from "react";
 import { useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabase";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -11,30 +12,37 @@ export default function LoginPage() {
 
   const router = useRouter();
 
-  // 🔐 kalau sudah login → redirect ke dashboard
+  // 🔐 cek kalau sudah login (Supabase session)
   useEffect(() => {
-    const isLogin = localStorage.getItem("isLogin");
-    if (isLogin) {
-      router.replace("/");
-    }
+    const checkUser = async () => {
+      const { data } = await supabase.auth.getUser();
+
+      if (data.user) {
+        router.replace("/");
+      }
+    };
+
+    checkUser();
   }, [router]);
 
   // 🔐 handle login
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
-    // simulasi login
-    if (email === "admin@gmail.com" && password === "123456") {
-      localStorage.setItem("isLogin", "true");
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
 
-      setTimeout(() => {
-        router.replace("/");
-      }, 500);
-    } else {
-      alert("Email atau password salah");
+    if (error) {
+      alert(error.message);
       setLoading(false);
+      return;
     }
+
+    // ✅ login sukses
+    router.replace("/");
   };
 
   return (
@@ -46,6 +54,7 @@ export default function LoginPage() {
           <img
             src="https://lh3.googleusercontent.com/aida-public/AB6AXuDaegl0g4ZoXGjDuj-Cv1FjXci0_tcA84j5-f48kTwo8x5SL1mK1dh-Gx7z1fVFVEtw3EYUViYtcqlqGYqdcmYbBXl9e9aXUPNnuZv_oht-VDwaZ_7woiVQqMfJydBP7qsXaQAZA-3FbbMPLLdi-aQftRnm8nfBwxkqMwboNhdUjz9CPQ3AByAROOA4iB9sObe4UkBbtG7IF3Ks1tN-2eCKH99L5wx_e4JrrJVEk7eou7edyhldF6-g2Ucy5uqXH_htpZ43oMSSwo1L"
             className="w-full h-full object-cover opacity-20"
+            alt="bg"
           />
         </div>
 
@@ -85,7 +94,7 @@ export default function LoginPage() {
               <input
                 type="email"
                 required
-                placeholder="admin@gmail.com"
+                placeholder="your@email.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full px-4 py-3 border rounded-lg"
@@ -98,7 +107,7 @@ export default function LoginPage() {
               <input
                 type="password"
                 required
-                placeholder="123456"
+                placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full px-4 py-3 border rounded-lg"

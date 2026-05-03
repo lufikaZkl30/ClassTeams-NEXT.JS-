@@ -17,4 +17,4 @@ export async function POST(req: Request) {
     message: "Team created",
     team,
   });
-}
+};

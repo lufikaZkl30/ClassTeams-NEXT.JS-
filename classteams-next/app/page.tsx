@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation"; // NOTE: pakai useRouter dari next/navigation, bukan next/router
+import { useRouter } from "next/navigation";
+
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Breadcrumb from "@/components/Breadcrumb";
@@ -12,76 +13,66 @@ import { Task, DEFAULT_TASKS } from "@/lib/types";
 
 const STORAGE_KEY = "classteams_tasks";
 
-const [hasTeam, setHasTeam] = useState(false);
-
-useEffect(() => {
-  const team = localStorage.getItem("team");
-  if (team) setHasTeam(true);
-}, []);
-
-function loadTasks(): Task[] {
-  if (typeof window === "undefined") return DEFAULT_TASKS;
-
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-
-    if (stored) {
-      return JSON.parse(stored) as Task[];
-    }
-
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_TASKS));
-    return DEFAULT_TASKS;
-  } catch {
-    return DEFAULT_TASKS;
-  }
-}
-
-function saveTasks(tasks: Task[]): void {
-  if (typeof window === "undefined") return;
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
-}
-
 export default function DashboardPage() {
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [mounted, setMounted] = useState(false);
-
   const router = useRouter();
 
-  // ✅ LOGIN PROTECTION + LOAD DATA
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [mounted, setMounted] = useState(false);
+  const [hasTeam, setHasTeam] = useState(false);
+
+  // 🔐 LOGIN + TEAM CHECK + LOAD DATA
   useEffect(() => {
     const isLogin = localStorage.getItem("isLogin");
 
     if (!isLogin) {
-      router.replace("/login"); // ⛔ kalau belum login
+      router.replace("/auth/login");
       return;
     }
 
-    const data = loadTasks();
-    setTasks(data);
+    const team = localStorage.getItem("team");
+    if (team) setHasTeam(true);
+
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+
+      if (stored) {
+        setTasks(JSON.parse(stored));
+      } else {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_TASKS));
+        setTasks(DEFAULT_TASKS);
+      }
+    } catch {
+      setTasks(DEFAULT_TASKS);
+    }
+
     setMounted(true);
   }, [router]);
 
+  // 💾 SAVE
+  function saveTasks(updated: Task[]) {
+    setTasks(updated);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+  }
+
+  // ➕ CREATE
   function handleCreate(taskData: Omit<Task, "id">) {
     const newTask: Task = {
       ...taskData,
       id: Date.now(),
     };
 
-    const updated = [newTask, ...tasks];
-
-    setTasks(updated);
-    saveTasks(updated);
+    saveTasks([newTask, ...tasks]);
   }
 
+  // ❌ DELETE
   function handleDelete(id: number) {
-    if (!confirm("Are you sure you want to delete this task?")) return;
+    if (!confirm("Are you sure?")) return;
 
     const updated = tasks.filter((t) => t.id !== id);
-
-    setTasks(updated);
     saveTasks(updated);
   }
 
+  // 📊 STATS
   const openTasks = tasks.filter(
     (t) => t.status === "PENDING" || t.status === "REVISED"
   ).length;
@@ -101,6 +92,7 @@ export default function DashboardPage() {
 
       <main className="p-12 flex-grow bg-background">
         <div className="max-w-6xl mx-auto">
+
           <Breadcrumb
             items={[
               { label: "Dashboard", href: "/" },
@@ -118,24 +110,46 @@ export default function DashboardPage() {
             </p>
           </header>
 
+          {/* 🚫 BELUM PUNYA TEAM */}
+          {!hasTeam && (
+            <div className="bg-white border border-dashed p-12 text-center rounded-xl mb-8">
+              <p className="text-gray-500 mb-4">
+                Kamu belum join / create team
+              </p>
+
+              <button
+                onClick={() => {
+                  localStorage.setItem("team", "dummy");
+                  setHasTeam(true);
+                }}
+                className="px-6 py-3 bg-blue-600 text-white rounded-full"
+              >
+                Create / Join Team (Test)
+              </button>
+            </div>
+          )}
+
           {/* GRID */}
           <div className="grid grid-cols-12 gap-8">
 
-            {/* TASK LIST */}
+            {/* TASK */}
             <section className="col-span-8 flex flex-col gap-6">
-              <NewPostBox onCreateTask={handleCreate} />
+
+              {hasTeam && (
+                <NewPostBox onCreateTask={handleCreate} />
+              )}
 
               {!mounted ? (
-                <div className="text-slate-500 text-center py-8 text-sm font-mono uppercase tracking-widest">
+                <div className="text-center py-8 text-sm">
                   Loading...
                 </div>
               ) : tasks.length === 0 ? (
-                <div className="bg-white border border-dashed border-outline/40 p-12 text-center">
+                <div className="bg-white border border-dashed p-12 text-center rounded-xl">
                   <span className="material-symbols-outlined text-4xl text-slate-300 mb-4 block">
                     inbox
                   </span>
-                  <p className="text-slate-500 text-[10px] font-mono uppercase tracking-widest">
-                    No tasks. Create a new entry above.
+                  <p className="text-gray-500 text-sm">
+                    No tasks yet
                   </p>
                 </div>
               ) : (
@@ -147,6 +161,18 @@ export default function DashboardPage() {
                   />
                 ))
               )}
+
+              {/* 🔓 LOGOUT */}
+              <button
+                onClick={() => {
+                  localStorage.removeItem("isLogin");
+                  router.push("/auth/login");
+                }}
+                className="mt-6 px-6 py-3 bg-red-500 text-white rounded-full"
+              >
+                Logout
+              </button>
+
             </section>
 
             {/* SIDEBAR */}
