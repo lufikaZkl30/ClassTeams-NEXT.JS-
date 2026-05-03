@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import "@/app/globals.css";
-import Sidebar from "@/components/Sidebar";
+import LayoutClient from "./LayoutClient";
 
 export const metadata: Metadata = {
   title: {
@@ -10,15 +10,15 @@ export const metadata: Metadata = {
   description: "Academic Ledger — Structural Assignment Management",
 };
 
-
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
     <html lang="en" className="light">
       <head>
+        {/* Google Fonts */}
         <link
           rel="stylesheet"
           href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
@@ -28,14 +28,9 @@ export default function RootLayout({
           href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
         />
       </head>
-      <body className="bg-background text-on-background min-h-screen flex">
-        {/* Fixed Left Sidebar */}
-        <Sidebar />
 
-        {/* Main Content — offset by sidebar width */}
-        <div className="flex-grow ml-64 flex flex-col min-h-screen">
-          {children}
-        </div>
+      <body className="bg-background text-on-background min-h-screen">
+        <LayoutClient>{children}</LayoutClient>
       </body>
     </html>
   );
