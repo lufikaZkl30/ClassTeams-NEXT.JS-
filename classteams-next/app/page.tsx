@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabase";
 
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -9,68 +10,65 @@ import Breadcrumb from "@/components/Breadcrumb";
 import PostCard from "@/components/PostCard";
 import NewPostBox from "@/components/NewPostBox";
 import RightSidebar from "@/components/RightSidebar";
-import { Task, DEFAULT_TASKS } from "@/lib/types";
-
-const STORAGE_KEY = "classteams_tasks";
 
 export default function DashboardPage() {
   const router = useRouter();
 
-  const [tasks, setTasks] = useState<Task[]>([]);
+  const [tasks, setTasks] = useState<any[]>([]);
   const [mounted, setMounted] = useState(false);
-  const [hasTeam, setHasTeam] = useState(false);
+  const [user, setUser] = useState<any>(null);
 
-  // 🔐 LOGIN + TEAM CHECK + LOAD DATA
+  // 🔐 AUTH + LOAD DATA
   useEffect(() => {
-    const isLogin = localStorage.getItem("isLogin");
+    const init = async () => {
+      const { data } = await supabase.auth.getUser();
 
-    if (!isLogin) {
-      router.replace("/auth/login");
-      return;
-    }
-
-    const team = localStorage.getItem("team");
-    if (team) setHasTeam(true);
-
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-
-      if (stored) {
-        setTasks(JSON.parse(stored));
-      } else {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_TASKS));
-        setTasks(DEFAULT_TASKS);
+      if (!data.user) {
+        router.replace("/auth/login");
+        return;
       }
-    } catch {
-      setTasks(DEFAULT_TASKS);
-    }
 
-    setMounted(true);
-  }, [router]);
+      setUser(data.user);
 
-  // 💾 SAVE
-  function saveTasks(updated: Task[]) {
-    setTasks(updated);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-  }
+      // 🔥 ambil tasks dari database
+      const { data: tasksData, error } = await supabase
+        .from("tasks")
+        .select("*")
+        .order("created_at", { ascending: false });
 
-  // ➕ CREATE
-  function handleCreate(taskData: Omit<Task, "id">) {
-    const newTask: Task = {
-      ...taskData,
-      id: Date.now(),
+      if (!error && tasksData) {
+        setTasks(tasksData);
+      }
+
+      setMounted(true);
     };
 
-    saveTasks([newTask, ...tasks]);
-  }
+    init();
+  }, [router]);
 
-  // ❌ DELETE
-  function handleDelete(id: number) {
-    if (!confirm("Are you sure?")) return;
+  // ➕ CREATE TASK
+  const handleCreate = async (taskData: any) => {
+    const { error } = await supabase.from("tasks").insert({
+      title: taskData.title,
+      description: taskData.description,
+      status: "PENDING",
+    });
 
-    const updated = tasks.filter((t) => t.id !== id);
-    saveTasks(updated);
-  }
+    if (!error) {
+      // reload tasks
+      const { data } = await supabase.from("tasks").select("*");
+      setTasks(data || []);
+    }
+  };
+
+  // ❌ DELETE TASK
+  const handleDelete = async (id: string) => {
+    if (!confirm("Delete task?")) return;
+
+    await supabase.from("tasks").delete().eq("id", id);
+
+    setTasks(tasks.filter((t) => t.id !== id));
+  };
 
   // 📊 STATS
   const openTasks = tasks.filter(
@@ -85,6 +83,12 @@ export default function DashboardPage() {
     tasks.length > 0
       ? Math.round((completedTasks / tasks.length) * 100)
       : 0;
+
+  // 🔓 LOGOUT
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.push("/auth/login");
+  };
 
   return (
     <>
@@ -106,28 +110,9 @@ export default function DashboardPage() {
               Academic Ledger
             </h2>
             <p className="text-sm font-mono text-primary tracking-widest uppercase">
-              Structural Assignment Management // Fall 2026
+              Connected to Supabase 🚀
             </p>
           </header>
-
-          {/* 🚫 BELUM PUNYA TEAM */}
-          {!hasTeam && (
-            <div className="bg-white border border-dashed p-12 text-center rounded-xl mb-8">
-              <p className="text-gray-500 mb-4">
-                Kamu belum join / create team
-              </p>
-
-              <button
-                onClick={() => {
-                  localStorage.setItem("team", "dummy");
-                  setHasTeam(true);
-                }}
-                className="px-6 py-3 bg-blue-600 text-white rounded-full"
-              >
-                Create / Join Team (Test)
-              </button>
-            </div>
-          )}
 
           {/* GRID */}
           <div className="grid grid-cols-12 gap-8">
@@ -135,9 +120,7 @@ export default function DashboardPage() {
             {/* TASK */}
             <section className="col-span-8 flex flex-col gap-6">
 
-              {hasTeam && (
-                <NewPostBox onCreateTask={handleCreate} />
-              )}
+              <NewPostBox onCreateTask={handleCreate} />
 
               {!mounted ? (
                 <div className="text-center py-8 text-sm">
@@ -157,17 +140,14 @@ export default function DashboardPage() {
                   <PostCard
                     key={task.id}
                     task={task}
-                    onDelete={handleDelete}
+                    onDelete={handleDelete} // passed handleDelete to PostCard
                   />
                 ))
               )}
 
-              {/* 🔓 LOGOUT */}
+              {/* LOGOUT */}
               <button
-                onClick={() => {
-                  localStorage.removeItem("isLogin");
-                  router.push("/auth/login");
-                }}
+                onClick={handleLogout}
                 className="mt-6 px-6 py-3 bg-red-500 text-white rounded-full"
               >
                 Logout
