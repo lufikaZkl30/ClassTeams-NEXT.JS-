@@ -11,12 +11,20 @@ import PostCard from "@/components/PostCard";
 import NewPostBox from "@/components/NewPostBox";
 import RightSidebar from "@/components/RightSidebar";
 
+// 🔥 TYPE FIX (biar ga merah)
+interface Task {
+  id: number;
+  title: string;
+  description: string;
+  status: "PENDING" | "SUBMITTED" | "COMPLETED" | "REVISED";
+  created_at?: string;
+}
+
 export default function DashboardPage() {
   const router = useRouter();
 
-  const [tasks, setTasks] = useState<any[]>([]);
+  const [tasks, setTasks] = useState<Task[]>([]);
   const [mounted, setMounted] = useState(false);
-  const [user, setUser] = useState<any>(null);
 
   // 🔐 AUTH + LOAD DATA
   useEffect(() => {
@@ -28,8 +36,6 @@ export default function DashboardPage() {
         return;
       }
 
-      setUser(data.user);
-
       // 🔥 ambil tasks dari database
       const { data: tasksData, error } = await supabase
         .from("tasks")
@@ -37,7 +43,7 @@ export default function DashboardPage() {
         .order("created_at", { ascending: false });
 
       if (!error && tasksData) {
-        setTasks(tasksData);
+        setTasks(tasksData as Task[]);
       }
 
       setMounted(true);
@@ -47,7 +53,10 @@ export default function DashboardPage() {
   }, [router]);
 
   // ➕ CREATE TASK
-  const handleCreate = async (taskData: any) => {
+  const handleCreate = async (taskData: {
+    title: string;
+    description: string;
+  }) => {
     const { error } = await supabase.from("tasks").insert({
       title: taskData.title,
       description: taskData.description,
@@ -55,19 +64,22 @@ export default function DashboardPage() {
     });
 
     if (!error) {
-      // reload tasks
-      const { data } = await supabase.from("tasks").select("*");
-      setTasks(data || []);
+      const { data } = await supabase
+        .from("tasks")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      setTasks((data as Task[]) || []);
     }
   };
 
   // ❌ DELETE TASK
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (id: number) => {
     if (!confirm("Delete task?")) return;
 
     await supabase.from("tasks").delete().eq("id", id);
 
-    setTasks(tasks.filter((t) => t.id !== id));
+    setTasks((prev) => prev.filter((t) => t.id !== id));
   };
 
   // 📊 STATS
@@ -136,11 +148,11 @@ export default function DashboardPage() {
                   </p>
                 </div>
               ) : (
-                tasks.map((task: Task) => (
+                tasks.map((task) => (
                   <PostCard
                     key={task.id}
                     task={task}
-                    onDelete={(id) => handleDelete(id)} // ✅ FIX aman
+                    onDelete={handleDelete} // ✅ FIX BERSIH
                   />
                 ))
               )}

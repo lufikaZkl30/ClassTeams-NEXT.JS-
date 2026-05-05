@@ -1,36 +1,28 @@
 "use client";
 
-import { useState, useEffect, FormEvent } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 
 export default function RegisterPage() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [remember, setRemember] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const router = useRouter();
 
-  // 🔐 kalau sudah login → langsung ke dashboard
-  useEffect(() => {
-    const checkUser = async () => {
-      const { data } = await supabase.auth.getUser();
-
-      if (data.user) {
-        router.replace("/");
-      }
-    };
-
-    checkUser();
-  }, [router]);
-
-  // 🔐 HANDLE REGISTER (INI YANG DIUBAH)
-  const handleSubmit = async (e: FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
 
-    const { error } = await supabase.auth.signUp({
+    const form = new FormData(e.currentTarget);
+
+    const fullName = form.get("fullName") as string;
+    const email = form.get("email") as string;
+    const studentId = form.get("studentId") as string;
+    const password = form.get("password") as string;
+
+    // 🔐 REGISTER KE SUPABASE AUTH
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
     });
@@ -41,120 +33,128 @@ export default function RegisterPage() {
       return;
     }
 
-    // ✅ sukses daftar
+    // 🧠 SIMPAN DATA TAMBAHAN KE TABLE profiles
+    if (data.user) {
+      await supabase.from("profiles").insert([
+        {
+          id: data.user.id,
+          full_name: fullName,
+          student_id: studentId,
+        },
+      ]);
+    }
+
     alert("Cek email kamu untuk verifikasi!");
+
     router.push("/auth/login");
   };
 
   return (
-    <main className="flex min-h-screen w-full">
-      
-      {/* LEFT SIDE */}
-      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-gradient-to-br from-primary to-primary-container items-center justify-center p-16">
-        <div className="absolute inset-0 z-0">
-          <img
-            src="https://lh3.googleusercontent.com/aida-public/AB6AXuDaegl0g4ZoXGjDuj-Cv1FjXci0_tcA84j5-f48kTwo8x5SL1mK1dh-Gx7z1fVFVEtw3EYUViYtcqlqGYqdcmYbBXl9e9aXUPNnuZv_oht-VDwaZ_7woiVQqMfJydBP7qsXaQAZA-3FbbMPLLdi-aQftRnm8nfBwxkqMwboNhdUjz9CPQ3AByAROOA4iB9sObe4UkBbtG7IF3Ks1tN-2eCKH99L5wx_e4JrrJVEk7eou7edyhldF6-g2Ucy5uqXH_htpZ43oMSSwo1L"
-            className="w-full h-full object-cover opacity-20"
-            alt="bg"
-          />
+    <div className="min-h-screen flex bg-[#f7f9fb] text-[#191c1e] antialiased selection:bg-[#dbe1ff] selection:text-[#00174b]">
+
+      {/* LEFT PANEL (TIDAK DIUBAH) */}
+      <div className="hidden md:flex md:w-5/12 lg:w-1/2 bg-[#00174b] relative overflow-hidden flex-col justify-between p-12 lg:p-20">
+        <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
+          <div className="absolute -top-40 -left-40 w-[600px] h-[600px] rounded-full bg-[#004ac6]/20 blur-[120px]" />
+          <div className="absolute bottom-0 right-0 w-[800px] h-[800px] rounded-full bg-[#495c95]/10 blur-[150px]" />
         </div>
 
-        <div className="relative z-10 max-w-lg text-white">
-          <h1 className="text-5xl font-extrabold mb-4">ClassTeams</h1>
-          <p className="text-xl opacity-80">Your Academic Ledger.</p>
-          <p className="mt-6 text-lg opacity-90">
-            Curate your assignments, track your progress, and manage your academic life.
+        <div className="relative z-10">
+          <div className="flex items-center gap-3 text-white">
+            <span className="material-symbols-outlined text-3xl">auto_stories</span>
+            <span className="font-extrabold text-2xl tracking-tight">ClassTeams</span>
+          </div>
+        </div>
+
+        <div className="relative z-10 max-w-lg mb-20">
+          <h1 className="text-5xl font-light text-white mb-8">
+            Your Academic <br />
+            <span className="font-semibold text-[#dbe1ff]">Ledger.</span>
+          </h1>
+          <p className="text-[#b4c5ff] text-lg">
+            Curate your semester, anticipate deadlines, and master your schedule.
           </p>
+        </div>
+
+        <div className="relative z-10 text-xs text-[#b4c5ff]/60 uppercase">
+          © 2026 ClassTeams
         </div>
       </div>
 
-      {/* RIGHT SIDE */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 bg-surface-container-lowest">
-        <div className="w-full max-w-md space-y-10">
+      {/* RIGHT PANEL */}
+      <div className="w-full md:w-7/12 lg:w-1/2 bg-white flex items-center justify-center p-6 sm:p-12 lg:p-24">
+        <div className="w-full max-w-[440px]">
 
-          {/* MOBILE LOGO */}
-          <div className="lg:hidden text-center">
-            <h1 className="text-3xl font-bold text-primary">ClassTeams</h1>
-            <p className="text-sm text-on-surface-variant">Your Academic Ledger</p>
-          </div>
-
-          {/* HEADER */}
-          <div>
-            <h2 className="text-3xl font-bold">Register</h2>
-            <p className="text-sm text-on-surface-variant mt-2">
+          <div className="mb-10">
+            <h2 className="text-3xl font-bold mb-3">
               Create your account
+            </h2>
+            <p className="text-[#434655]">
+              Setup takes less than a minute.
             </p>
           </div>
 
-          {/* FORM */}
           <form onSubmit={handleSubmit} className="space-y-6">
 
-            {/* EMAIL */}
-            <div>
-              <label className="text-sm block mb-2">Email</label>
+            <input
+              name="fullName"
+              type="text"
+              required
+              placeholder="Full Name"
+              className="w-full px-4 py-3 bg-[#e6e8ea] rounded-lg"
+            />
+
+            <input
+              name="email"
+              type="email"
+              required
+              placeholder="Email"
+              className="w-full px-4 py-3 bg-[#e6e8ea] rounded-lg"
+            />
+
+            <input
+              name="studentId"
+              type="text"
+              required
+              placeholder="Student ID"
+              className="w-full px-4 py-3 bg-[#e6e8ea] rounded-lg"
+            />
+
+            <div className="relative">
               <input
-                type="email"
+                name="password"
+                type={showPassword ? "text" : "password"}
                 required
-                placeholder="your@email.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-3 border rounded-lg"
+                placeholder="Password"
+                className="w-full px-4 py-3 bg-[#e6e8ea] rounded-lg"
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-4 top-1/2 -translate-y-1/2"
+              >
+                👁
+              </button>
             </div>
 
-            {/* PASSWORD */}
-            <div>
-              <label className="text-sm block mb-2">Password</label>
-              <input
-                type="password"
-                required
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-3 border rounded-lg"
-              />
-            </div>
-
-            {/* REMEMBER */}
-            <div className="flex items-center">
-              <input
-                type="checkbox"
-                checked={remember}
-                onChange={(e) => setRemember(e.target.checked)}
-                className="mr-2"
-              />
-              <span className="text-sm">Remember Me</span>
-            </div>
-
-            {/* BUTTON */}
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 bg-primary text-white rounded-full"
+              className="w-full py-4 bg-blue-600 text-white rounded-full"
             >
               {loading ? "Registering..." : "Register"}
             </button>
-
-            {/* ALT LOGIN */}
-            <button
-              type="button"
-              className="w-full py-3 border rounded-full flex justify-center items-center gap-2"
-            >
-              <span className="material-symbols-outlined">school</span>
-              Sign up with School Account
-            </button>
           </form>
 
-          {/* FOOTER */}
-          <p className="text-center text-sm text-on-surface-variant">
-            Already have an account?{" "}
-            <a href="/auth/login" className="text-primary font-semibold">
+          <p className="mt-10 text-center text-sm">
+            Already have an account?
+            <a href="/auth/login" className="text-blue-600 ml-1">
               Sign In
             </a>
           </p>
 
         </div>
       </div>
-    </main>
+    </div>
   );
 }

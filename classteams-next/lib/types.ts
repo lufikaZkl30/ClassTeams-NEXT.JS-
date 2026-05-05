@@ -4,15 +4,17 @@ export type TaskStatus = "PENDING" | "SUBMITTED" | "COMPLETED" | "REVISED";
 export type TaskPriority = "CRITICAL" | "HIGH" | "NORMAL";
 
 export interface Task {
-  id: number;
-  code: string;
+  id: string; // 🔥 FIX (Supabase pakai uuid)
   title: string;
-  deadline: string;
-  instructor: string;
-  status: TaskStatus;
-  priority: TaskPriority;
-  course: string;
   description: string;
+  status: TaskStatus;
+
+  // optional (biar design lama tetap jalan)
+  code?: string;
+  deadline?: string;
+  instructor?: string;
+  priority?: TaskPriority;
+  course?: string;
 }
 
 // ===== NAVIGATION TYPES =====
@@ -52,47 +54,6 @@ export const SETTINGS_NAV: NavItem = {
   icon: "settings",
   page: "settings",
 };
-
-// ===== DEFAULT DATA =====
-
-export const DEFAULT_TASKS: Task[] = [
-  {
-    id: 1,
-    code: "ARCH101",
-    title: "Spatial Dynamics in Urban Design",
-    deadline: "OCT 24, 2023",
-    instructor: "Dr. James Mitchell",
-    status: "PENDING",
-    priority: "NORMAL",
-    course: "Foundations of Architecture",
-    description:
-      "Analyze spatial dynamics and urban design principles in contemporary architecture.",
-  },
-  {
-    id: 2,
-    code: "DMS204",
-    title: "Interactivity & Visual Hierarchy",
-    deadline: "OCT 20, 2023",
-    instructor: "Prof. Sarah Chen",
-    status: "SUBMITTED",
-    priority: "NORMAL",
-    course: "Digital Media Studio",
-    description:
-      "Create interactive digital media layouts with proper visual hierarchy.",
-  },
-  {
-    id: 3,
-    code: "VIS102",
-    title: "Typography & Typeface History",
-    deadline: "NOV 02, 2023",
-    instructor: "Dr. Michael Ross",
-    status: "PENDING",
-    priority: "CRITICAL",
-    course: "Visual Communications",
-    description:
-      "Comprehensive study of typography history and contemporary typeface design.",
-  },
-];
 
 // ===== HELPER FUNCTIONS =====
 

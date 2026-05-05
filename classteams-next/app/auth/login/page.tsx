@@ -3,6 +3,7 @@
 import { useState, useEffect, FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import Link from "next/link";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -147,9 +148,12 @@ export default function LoginPage() {
           {/* FOOTER */}
           <p className="text-center text-sm text-on-surface-variant">
             Need an account?{" "}
-            <span className="text-primary font-semibold cursor-pointer">
+            <Link
+              href="/auth/register"
+              className="text-primary font-semibold cursor-pointer hover:underline"
+            >
               Request Access
-            </span>
+            </Link>
           </p>
 
         </div>
