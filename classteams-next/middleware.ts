@@ -11,13 +11,15 @@ export async function middleware(req: NextRequest) {
     data: { session },
   } = await supabase.auth.getSession();
 
+  const isAuthPage = req.nextUrl.pathname.startsWith("/auth");
+
   // ❌ belum login → paksa ke login
-  if (!session && req.nextUrl.pathname.startsWith("/")) {
+  if (!session && !isAuthPage) {
     return NextResponse.redirect(new URL("/auth/login", req.url));
   }
 
-  // ❌ sudah login → jangan balik ke login page
-  if (session && req.nextUrl.pathname.startsWith("/auth")) {
+  // ❌ sudah login → jangan balik ke login
+  if (session && isAuthPage) {
     return NextResponse.redirect(new URL("/", req.url));
   }
 
