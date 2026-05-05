@@ -136,11 +136,11 @@ export default function DashboardPage() {
                   </p>
                 </div>
               ) : (
-                tasks.map((task) => (
+                tasks.map((task: Task) => (
                   <PostCard
                     key={task.id}
                     task={task}
-                    onDelete={handleDelete} // passed handleDelete to PostCard
+                    onDelete={(id) => handleDelete(id)} // ✅ FIX aman
                   />
                 ))
               )}
@@ -162,6 +162,7 @@ export default function DashboardPage() {
               complianceRate={complianceRate}
             />
           </div>
+
         </div>
       </main>
 

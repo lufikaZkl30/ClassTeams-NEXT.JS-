@@ -66,15 +66,19 @@ export default function PostCard({ task, onDelete }: PostCardProps) {
         <div className="flex items-center gap-3">
           {onDelete && (
             <button
-              onClick={() => onDelete(task.id)}
+              onClick={() => onDelete?.(Number(task.id))}
               className="text-slate-400 hover:text-error transition-colors p-1"
               aria-label={`Delete task: ${task.title}`}
             >
-              <span className="material-symbols-outlined text-sm" aria-hidden="true">
+              <span
+                className="material-symbols-outlined text-sm"
+                aria-hidden="true"
+              >
                 delete
               </span>
             </button>
           )}
+
           <Link
             href={`/detail-teams?id=${task.id}`}
             className="bg-primary text-on-primary px-6 py-2 text-[10px] font-bold uppercase tracking-widest hover:bg-blue-700 transition-colors"
@@ -82,6 +86,7 @@ export default function PostCard({ task, onDelete }: PostCardProps) {
             Open Case
           </Link>
         </div>
+
       </footer>
     </article>
   );
