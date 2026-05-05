@@ -10,62 +10,70 @@ import Breadcrumb from "@/components/Breadcrumb";
 import PostCard from "@/components/PostCard";
 import NewPostBox from "@/components/NewPostBox";
 import RightSidebar from "@/components/RightSidebar";
-import type { Task } from "@/lib/types";
+import { Task } from "@/lib/types";
 
 export default function DashboardPage() {
   const router = useRouter();
 
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [mounted, setMounted] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // 🔐 AUTH + LOAD DATA
+  // 🔐 AUTH + LOAD DATA (NO FLICKER)
   useEffect(() => {
+    let isMounted = true;
+
     const init = async () => {
       try {
-        setLoading(true);
-        const { data, error: authError } = await supabase.auth.getUser();
-
-        if (authError || !data.user) {
-          router.replace("/auth/login");
-          return;
-        }
-
+        // ✅ Middleware sudah handle auth check, jadi langsung load data
         const { data: tasksData, error: tasksError } = await supabase
           .from("tasks")
           .select("*")
           .order("created_at", { ascending: false });
 
         if (tasksError) {
-          setError(tasksError.message);
-          setTasks([]);
-        } else if (tasksData) {
-          const mapped: Task[] = tasksData.map((t: any) => ({
-            id: t.id, // ✅ Keep as string (Supabase UUID)
-            code: t.code || "TASK",
-            title: t.title || "-",
-            deadline: t.deadline || "-",
-            instructor: t.instructor || "Unknown",
-            status: t.status || "PENDING",
-            priority: t.priority || "NORMAL",
-            course: t.course || "-",
-            description: t.description || "",
-          }));
+          if (isMounted) {
+            setError(tasksError.message);
+            setTasks([]);
+          }
+          return;
+        }
 
+        // ✅ Mapping dengan string ID (sesuai Supabase UUID)
+        const mapped: Task[] =
+          tasksData?.map((t: any) => ({
+            id: t.id, // Keep as string (UUID)
+            code: t.code ?? "TASK",
+            title: t.title ?? "-",
+            deadline: t.deadline ?? "-",
+            instructor: t.instructor ?? "Unknown",
+            status: t.status ?? "PENDING",
+            priority: t.priority ?? "NORMAL",
+            course: t.course ?? "-",
+            description: t.description ?? "",
+          })) || [];
+
+        if (isMounted) {
           setTasks(mapped);
           setError(null);
         }
       } catch (err) {
-        console.error("Error initializing dashboard:", err);
-        setError("Failed to load dashboard");
+        console.error(err);
+        if (isMounted) {
+          setError("Failed to load dashboard");
+        }
       } finally {
-        setMounted(true);
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
 
     init();
+
+    return () => {
+      isMounted = false;
+    };
   }, [router]);
 
   // ➕ CREATE
@@ -74,7 +82,7 @@ export default function DashboardPage() {
     description: string;
   }) => {
     try {
-      const { error: insertError } = await supabase.from("tasks").insert({
+      const { error } = await supabase.from("tasks").insert({
         title: taskData.title,
         description: taskData.description,
         status: "PENDING",
@@ -84,37 +92,33 @@ export default function DashboardPage() {
         priority: "NORMAL",
       });
 
-      if (insertError) {
-        setError(insertError.message);
+      if (error) {
+        setError(error.message);
         return;
       }
 
-      // Reload data tanpa refresh page
-      const { data, error: fetchError } = await supabase
+      // Reload data (tanpa flicker)
+      const { data } = await supabase
         .from("tasks")
         .select("*")
         .order("created_at", { ascending: false });
 
-      if (fetchError) {
-        setError(fetchError.message);
-      } else if (data) {
-        const mapped: Task[] = data.map((t: any) => ({
-          id: t.id, // ✅ Keep as string (Supabase UUID)
-          code: t.code || "TASK",
-          title: t.title || "-",
-          deadline: t.deadline || "-",
-          instructor: t.instructor || "Unknown",
-          status: t.status || "PENDING",
-          priority: t.priority || "NORMAL",
-          course: t.course || "-",
-          description: t.description || "",
-        }));
+      const mapped: Task[] =
+        data?.map((t: any) => ({
+          id: t.id, // Keep as string
+          code: t.code ?? "TASK",
+          title: t.title ?? "-",
+          deadline: t.deadline ?? "-",
+          instructor: t.instructor ?? "Unknown",
+          status: t.status ?? "PENDING",
+          priority: t.priority ?? "NORMAL",
+          course: t.course ?? "-",
+          description: t.description ?? "",
+        })) || [];
 
-        setTasks(mapped);
-        setError(null);
-      }
-    } catch (err) {
-      console.error("Error creating task:", err);
+      setTasks(mapped);
+      setError(null);
+    } catch {
       setError("Failed to create task");
     }
   };
@@ -124,20 +128,16 @@ export default function DashboardPage() {
     if (!confirm("Delete task?")) return;
 
     try {
-      const { error: deleteError } = await supabase
-        .from("tasks")
-        .delete()
-        .eq("id", id);
+      const { error } = await supabase.from("tasks").delete().eq("id", id);
 
-      if (deleteError) {
-        setError(deleteError.message);
+      if (error) {
+        setError(error.message);
         return;
       }
 
       setTasks((prev) => prev.filter((t) => t.id !== id));
       setError(null);
-    } catch (err) {
-      console.error("Error deleting task:", err);
+    } catch {
       setError("Failed to delete task");
     }
   };
@@ -158,38 +158,9 @@ export default function DashboardPage() {
 
   // 🔓 LOGOUT
   const handleLogout = async () => {
-    try {
-      const { error: logoutError } = await supabase.auth.signOut();
-      if (logoutError) {
-        setError(logoutError.message);
-        return;
-      }
-      router.push("/auth/login");
-    } catch (err) {
-      console.error("Error logging out:", err);
-      setError("Failed to logout");
-    }
+    await supabase.auth.signOut();
+    router.push("/auth/login");
   };
-
-  // 🔄 Render Loading State
-  if (loading || !mounted) {
-    return (
-      <>
-        <Header searchPlaceholder="SEARCH DASHBOARD..." />
-        <main className="p-12 flex-grow bg-background">
-          <div className="max-w-6xl mx-auto text-center py-12">
-            <div className="animate-spin inline-block">
-              <span className="material-symbols-outlined text-4xl">
-                hourglass_empty
-              </span>
-            </div>
-            <p className="mt-4 text-gray-500">Loading dashboard...</p>
-          </div>
-        </main>
-        <Footer />
-      </>
-    );
-  }
 
   return (
     <>
@@ -229,11 +200,29 @@ export default function DashboardPage() {
 
           {/* GRID */}
           <div className="grid grid-cols-12 gap-8">
-            {/* TASK */}
+            {/* TASK SECTION */}
             <section className="col-span-8 flex flex-col gap-6">
               <NewPostBox onCreateTask={handleCreate} />
 
-              {tasks.length === 0 ? (
+              {/* LOADING STATE - Skeleton */}
+              {loading ? (
+                <div className="space-y-6">
+                  {[1, 2, 3].map((i) => (
+                    <div
+                      key={i}
+                      className="animate-pulse bg-white rounded-xl overflow-hidden border border-outline/20"
+                    >
+                      <div className="bg-surface-container-high p-6 mb-[1px]">
+                        <div className="h-4 bg-gray-200 rounded w-24 mb-3"></div>
+                        <div className="h-6 bg-gray-200 rounded w-3/4"></div>
+                      </div>
+                      <div className="bg-white p-6">
+                        <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : tasks.length === 0 ? (
                 <div className="bg-white border border-dashed p-12 text-center rounded-xl">
                   <span className="material-symbols-outlined text-4xl text-slate-300 mb-4 block">
                     inbox

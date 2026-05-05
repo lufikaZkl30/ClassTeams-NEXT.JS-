@@ -126,14 +126,18 @@ export default function RegisterPage() {
                 type={showPassword ? "text" : "password"}
                 required
                 placeholder="Password"
-                className="w-full px-4 py-3 bg-[#e6e8ea] rounded-lg"
+                className="w-full px-4 py-3 pr-12 bg-[#e6e8ea] rounded-lg outline-none focus:ring-2 focus:ring-[#004ac6] transition"
               />
+
               <button
                 type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-4 top-1/2 -translate-y-1/2"
+                onClick={() => setShowPassword((prev) => !prev)}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-black transition"
+                aria-label="Toggle password visibility"
               >
-                👁
+                <span className="material-symbols-outlined text-[20px]">
+                  {showPassword ? "visibility" : "visibility_off"}
+                </span>
               </button>
             </div>
 
