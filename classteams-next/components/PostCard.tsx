@@ -7,7 +7,7 @@ import {
 
 interface PostCardProps {
   task: Task;
-  onDelete?: (id: string) => void; // 🔥 FIX
+  onDelete?: (id: string) => void | Promise<void>; // ✅ FIXED: string to match Supabase UUID
 }
 
 export default function PostCard({ task, onDelete }: PostCardProps) {

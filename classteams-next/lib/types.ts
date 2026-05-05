@@ -4,7 +4,7 @@ export type TaskStatus = "PENDING" | "SUBMITTED" | "COMPLETED" | "REVISED";
 export type TaskPriority = "CRITICAL" | "HIGH" | "NORMAL";
 
 export interface Task {
-  id: string; // 🔥 FIX (Supabase pakai uuid)
+  id: string; // ✅ Supabase pakai UUID (string)
   title: string;
   description: string;
   status: TaskStatus;

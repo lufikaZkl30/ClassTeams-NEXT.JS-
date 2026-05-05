@@ -77,7 +77,7 @@ export default function RegisterPage() {
         </div>
 
         <div className="relative z-10 text-xs text-[#b4c5ff]/60 uppercase">
-          © 2026 ClassTeams
+          © 2026 CLASSTEAMS ACADEMIC 
         </div>
       </div>
 

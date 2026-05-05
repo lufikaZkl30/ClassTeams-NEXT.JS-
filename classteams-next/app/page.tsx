@@ -42,7 +42,7 @@ export default function DashboardPage() {
           setTasks([]);
         } else if (tasksData) {
           const mapped: Task[] = tasksData.map((t: any) => ({
-            id: Number(t.id),
+            id: t.id, // ✅ Keep as string (Supabase UUID)
             code: t.code || "TASK",
             title: t.title || "-",
             deadline: t.deadline || "-",
@@ -99,7 +99,7 @@ export default function DashboardPage() {
         setError(fetchError.message);
       } else if (data) {
         const mapped: Task[] = data.map((t: any) => ({
-          id: Number(t.id),
+          id: t.id, // ✅ Keep as string (Supabase UUID)
           code: t.code || "TASK",
           title: t.title || "-",
           deadline: t.deadline || "-",
@@ -120,7 +120,7 @@ export default function DashboardPage() {
   };
 
   // ❌ DELETE
-  const handleDelete = async (id: number) => {
+  const handleDelete = async (id: string) => {
     if (!confirm("Delete task?")) return;
 
     try {
