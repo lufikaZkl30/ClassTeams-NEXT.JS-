@@ -2,52 +2,18 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 export async function middleware(request: NextRequest) {
-  let response = NextResponse.next({
-    request,
-  });
+  const response = NextResponse.next();
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
     {
       cookies: {
-        get(name) {
+        get(name: string) {
           return request.cookies.get(name)?.value;
         },
-        set(name, value, options) {
-          request.cookies.set({
-            name,
-            value,
-            ...options,
-          });
-
-          response = NextResponse.next({
-            request,
-          });
-
-          response.cookies.set({
-            name,
-            value,
-            ...options,
-          });
-        },
-        remove(name, options) {
-          request.cookies.set({
-            name,
-            value: "",
-            ...options,
-          });
-
-          response = NextResponse.next({
-            request,
-          });
-
-          response.cookies.set({
-            name,
-            value: "",
-            ...options,
-          });
-        },
+        set() {},
+        remove() {},
       },
     }
   );
@@ -56,14 +22,26 @@ export async function middleware(request: NextRequest) {
     data: { session },
   } = await supabase.auth.getSession();
 
-  // 🔐 Protect dashboard
-  if (!session && request.nextUrl.pathname === "/") {
-    return NextResponse.redirect(new URL("/auth/login", request.url));
+  const isLoginPage =
+    request.nextUrl.pathname.startsWith("/auth/login");
+
+  // ❌ belum login → ke login
+  if (!session && !isLoginPage) {
+    return NextResponse.redirect(
+      new URL("/auth/login", request.url)
+    );
+  }
+
+  // ✅ sudah login → jangan balik login
+  if (session && isLoginPage) {
+    return NextResponse.redirect(
+      new URL("/", request.url)
+    );
   }
 
   return response;
 }
 
 export const config = {
-  matcher: ["/"],
+  matcher: ["/", "/auth/login"],
 };
