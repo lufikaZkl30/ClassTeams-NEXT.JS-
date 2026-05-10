@@ -17,7 +17,7 @@ export async function middleware(req: NextRequest) {
   if (!session && !isAuthPage) {
     return NextResponse.redirect(new URL("/auth/login", req.url));
   }
-
+  
   // ❌ sudah login → jangan balik ke login
   if (session && isAuthPage) {
     return NextResponse.redirect(new URL("/", req.url));
@@ -26,3 +26,6 @@ export async function middleware(req: NextRequest) {
   return res;
 }
 
+export const config = {
+  matcher: ["/", "/dashboard", "/auth/:path*"],
+};
