@@ -1,31 +1,69 @@
-import { createMiddlewareClient } from "@supabase/auth-helpers-nextjs";
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
+import { createServerClient } from "@supabase/ssr";
+import { NextResponse, type NextRequest } from "next/server";
 
-export async function middleware(req: NextRequest) {
-  const res = NextResponse.next();
+export async function middleware(request: NextRequest) {
+  let response = NextResponse.next({
+    request,
+  });
 
-  const supabase = createMiddlewareClient({ req, res });
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        get(name) {
+          return request.cookies.get(name)?.value;
+        },
+        set(name, value, options) {
+          request.cookies.set({
+            name,
+            value,
+            ...options,
+          });
+
+          response = NextResponse.next({
+            request,
+          });
+
+          response.cookies.set({
+            name,
+            value,
+            ...options,
+          });
+        },
+        remove(name, options) {
+          request.cookies.set({
+            name,
+            value: "",
+            ...options,
+          });
+
+          response = NextResponse.next({
+            request,
+          });
+
+          response.cookies.set({
+            name,
+            value: "",
+            ...options,
+          });
+        },
+      },
+    }
+  );
 
   const {
     data: { session },
   } = await supabase.auth.getSession();
 
-  const isAuthPage = req.nextUrl.pathname.startsWith("/auth");
-
-  // ❌ belum login → paksa ke login
-  if (!session && !isAuthPage) {
-    return NextResponse.redirect(new URL("/auth/login", req.url));
-  }
-  
-  // ❌ sudah login → jangan balik ke login
-  if (session && isAuthPage) {
-    return NextResponse.redirect(new URL("/", req.url));
+  // 🔐 Protect dashboard
+  if (!session && request.nextUrl.pathname === "/") {
+    return NextResponse.redirect(new URL("/auth/login", request.url));
   }
 
-  return res;
+  return response;
 }
 
 export const config = {
-  matcher: ["/", "/dashboard", "/auth/:path*"],
+  matcher: ["/"],
 };
