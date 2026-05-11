@@ -35,6 +35,12 @@ export const NAV_ITEMS: NavItem[] = [
     page: "assignments",
   },
   {
+    label: "Quizzes",
+    href: "/quizzes",
+    icon: "quiz",
+    page: "quizzes",
+  },
+  {
     label: "Schedule",
     href: "/schedule",
     icon: "calendar_today",
@@ -45,6 +51,12 @@ export const NAV_ITEMS: NavItem[] = [
     href: "/resources",
     icon: "folder",
     page: "resources",
+  },
+  {
+    label: "Directory",
+    href: "/directory",
+    icon: "contacts",
+    page: "directory",
   },
 ];
 
