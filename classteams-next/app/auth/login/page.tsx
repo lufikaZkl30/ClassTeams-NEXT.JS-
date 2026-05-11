@@ -43,7 +43,8 @@ export default function LoginPage() {
     }
 
     // ✅ login sukses
-    router.replace("/");
+    router.refresh();
+    window.location.href = "/";
   };
 
   return (

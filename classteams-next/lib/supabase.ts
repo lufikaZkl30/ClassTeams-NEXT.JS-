@@ -1,4 +1,4 @@
-import { createClient } from "@supabase/supabase-js";
+import { createBrowserClient } from "@supabase/ssr";
 
 // ✅ Ambil ENV dari .env.local
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -13,14 +13,7 @@ if (!supabaseUrl || !supabaseAnonKey) {
 }
 
 // ✅ Supabase Client
-export const supabase = createClient(
+export const supabase = createBrowserClient(
   supabaseUrl,
-  supabaseAnonKey,
-  {
-    auth: {
-      persistSession: true,
-      autoRefreshToken: true,
-      detectSessionInUrl: true,
-    },
-  }
+  supabaseAnonKey
 );
